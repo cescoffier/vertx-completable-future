@@ -22,12 +22,10 @@ import java.util.concurrent.Executors;
 public class CompletableFutureOperatorTest {
 
   private Vertx vertx;
-  private Executor executor;
 
   @Before
   public void setUp() {
     vertx = Vertx.vertx();
-    executor = Executors.newSingleThreadExecutor();
   }
 
   @After
