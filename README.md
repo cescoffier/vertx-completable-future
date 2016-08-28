@@ -52,6 +52,8 @@ CompletableFuture<Void> future = VertxCompletableFuture.runAsync(vertx, () -> Sy
 CompletableFuture<Void> future = VertxCompletableFuture.runBlockingAsync(vertx, () -> System.out.println(foo"));
 ```
 
+_*BlockingAsync_ method uses a Vert.x worker thread and do not block the Vert.x Event Loop.
+
 ### Stages
 
 Once you have the `VertxCompletableFuture` instance, you can use the `CompletableFuture` API:
@@ -112,6 +114,19 @@ VertxCompletableFuture.allOf(requestA, requestB).thenApply(v -> requestA.join() 
       async.complete();
     });
 }
+```
+
+### From / To Vert.x Futures
+
+You can transform a `VertxCompletableFuture` to a Vert.x `Future` with the `toFuture` method.
+
+You can also creates a new `VertxCompletableFuture` from a Vert.x `Future` using:
+
+```
+Future<Integer> vertxFuture = ...
+VertxCompletableFuture<Integer> vcf = VertxCompletableFuture.from(vertx, vertxFuture);
+
+vcf.thenAccept(i -> {...}).whenComplete((res, err) -> {...})
 ```
 
 
