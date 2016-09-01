@@ -4,15 +4,21 @@
 
   <modelVersion>4.0.0</modelVersion>
 
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>7</version>
-  </parent>
-
   <groupId>me.escoffier.vertx</groupId>
   <artifactId>vertx-completable-future</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.0-SNAPSHOT</version>
+
+  <name>Vert.x Completable Future</name>
+  <description>An implementation of CompletableFuture for Vert.x 3.x</description>
+  <url>https://github.com/cescoffier/vertx-completable-future</url>
+
+  <licenses>
+    <license>
+      <name>Apache License 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+    </license>
+  </licenses>
+
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -48,8 +54,26 @@
     </dependencies>
   </dependencyManagement>
 
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.7</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
@@ -57,29 +81,88 @@
           <target>1.8</target>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-            <configuration>
-              <additionalparam>-Xdoclint:none</additionalparam>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
     </plugins>
   </build>
 
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>2.2.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>2.9.1</version>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+                <configuration>
+                  <additionalparam>-Xdoclint:none</additionalparam>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>1.5</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <scm>
-    <connection>scm:svn:http://svn.sonatype.org/spice/tags/vertx-completable-future-0.1.0</connection>
-    <developerConnection>scm:svn:https://svn.sonatype.org/spice/tags/vertx-completable-future-0.1.0
-    </developerConnection>
-    <url>http://svn.sonatype.org/spice/tags/vertx-completable-future-0.1.0</url>
+    <url>https://github.com/cescoffier/vertx-completable-future</url>
+    <connection>https://github.com/cescoffier/vertx-completable-future.git</connection>
+    <developerConnection>scm:git:git@github.com:cescoffier/vertx-completable-future.git</developerConnection>
   </scm>
+
+  <inceptionYear>2016</inceptionYear>
+
+  <issueManagement>
+    <system>github</system>
+    <url>https://github.com/cescoffier/vertx-completable-future/issues</url>
+  </issueManagement>
+
+  <organization>
+    <name>escoffier.me</name>
+    <url>http://escoffier.me</url>
+  </organization>
+
+  <developers>
+    <developer>
+      <id>cescoffier</id>
+      <name>Clement Escoffier</name>
+      <email>clement[AT]apache[DOT]org</email>
+      <url>https://github.com/cescoffier</url>
+    </developer>
+  </developers>
+
+
 </project>
