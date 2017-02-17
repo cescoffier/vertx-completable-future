@@ -21,13 +21,15 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <vertx.version>3.3.2</vertx.version>
+    <vertx.version>3.4.0.Beta1</vertx.version>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-core</artifactId>
+      <!-- to avoid conflicts with the Vert.x version used by an application -->
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
