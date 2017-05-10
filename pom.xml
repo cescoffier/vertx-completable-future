@@ -5,7 +5,7 @@
 
   <groupId>me.escoffier.vertx</groupId>
   <artifactId>vertx-completable-future</artifactId>
-  <version>0.1.2-SNAPSHOT</version>
+  <version>0.1.2</version>
 
   <name>Vert.x Completable Future</name>
   <description>An implementation of CompletableFuture for Vert.x 3.x</description>
@@ -154,7 +154,7 @@
     <url>https://github.com/cescoffier/vertx-completable-future</url>
     <connection>https://github.com/cescoffier/vertx-completable-future.git</connection>
     <developerConnection>scm:git:git@github.com:cescoffier/vertx-completable-future.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>vertx-completable-future-0.1.2</tag>
   </scm>
 
   <inceptionYear>2016</inceptionYear>
