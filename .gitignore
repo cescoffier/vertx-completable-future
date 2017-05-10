@@ -26,3 +26,7 @@ buildNumber.properties
 
 ### Vert.x
 .vertx
+
+### IntelliJ
+.idea/
+*.iml
