@@ -975,7 +975,6 @@ public class VertxCompletableFutureTest {
       ).whenComplete((res, err) -> {
         tc.assertNotNull(err);
         tc.assertNull(res);
-        tc.assertEquals(thread, Thread.currentThread().getName());
         async2.complete();
       });
 
