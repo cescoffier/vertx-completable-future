@@ -1,15 +1,16 @@
 package me.escoffier.vertx.completablefuture;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.vertx.core.Context;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
+import io.vertx.ext.unit.junit.Repeat;
+import io.vertx.ext.unit.junit.RepeatRule;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.*;
 import org.junit.runner.RunWith;
-
-import io.vertx.core.Future;
-
 
 import java.util.concurrent.*;
 
@@ -22,10 +23,15 @@ public class VertxCompletableFutureTest {
   private Vertx vertx;
   private Executor executor;
 
+  @Rule
+  public RepeatRule rule = new RepeatRule();
+
   @Before
   public void setUp(TestContext tc) {
     vertx = Vertx.vertx();
-    executor = Executors.newSingleThreadExecutor();
+    ThreadFactory namedThreadFactory =
+      new ThreadFactoryBuilder().setNameFormat("my-sad-thread-%d").build();
+    executor = Executors.newSingleThreadExecutor(namedThreadFactory);
     vertx.exceptionHandler(tc.exceptionHandler());
   }
 
@@ -282,13 +288,13 @@ public class VertxCompletableFutureTest {
       });
 
       failure1
-          .runAfterEitherAsync(success2, () -> tc.fail("Should not be called"))
-          .whenComplete((res, err) -> {
-            tc.assertNotNull(err);
-            tc.assertNull(res);
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            async2.complete();
-          });
+        .runAfterEitherAsync(success2, () -> tc.fail("Should not be called"))
+        .whenComplete((res, err) -> {
+          tc.assertNotNull(err);
+          tc.assertNull(res);
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          async2.complete();
+        });
 
       success1.runAfterEitherAsync(failure2, () -> {
         tc.assertEquals(thread, Thread.currentThread().getName());
@@ -338,13 +344,13 @@ public class VertxCompletableFutureTest {
       }, executor);
 
       failure2
-          .runAfterEitherAsync(success2, () -> tc.fail("Should not be called"), executor)
-          .whenComplete((res, err) -> {
-            tc.assertNotNull(err);
-            tc.assertNull(res);
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            async2.complete();
-          });
+        .runAfterEitherAsync(success2, () -> tc.fail("Should not be called"), executor)
+        .whenComplete((res, err) -> {
+          tc.assertNotNull(err);
+          tc.assertNull(res);
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          async2.complete();
+        });
 
       success1.runAfterEitherAsync(failure2, () -> {
         tc.assertNotEquals(thread, Thread.currentThread().getName());
@@ -826,13 +832,13 @@ public class VertxCompletableFutureTest {
       String thread = Thread.currentThread().getName();
 
       future1.withContext()
-          .thenComposeAsync(this::inc)
-          .thenComposeAsync(this::inc)
-          .thenAccept(i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 44);
-            async.complete();
-          });
+        .thenComposeAsync(this::inc)
+        .thenComposeAsync(this::inc)
+        .thenAccept(i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 44);
+          async.complete();
+        });
 
       future1.complete(42);
     });
@@ -881,28 +887,28 @@ public class VertxCompletableFutureTest {
       String thread = Thread.currentThread().getName();
 
       success.acceptEither(
-          success2,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async1.complete();
-          }
+        success2,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async1.complete();
+        }
       );
 
       success2.acceptEither(
-          success,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async11.complete();
-          }
+        success,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async11.complete();
+        }
       );
 
       failure.acceptEither(
-          success,
-          i -> {
-            tc.fail("Should not be called");
-          }
+        success,
+        i -> {
+          tc.fail("Should not be called");
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(err);
         tc.assertNull(res);
@@ -911,12 +917,12 @@ public class VertxCompletableFutureTest {
       });
 
       success.acceptEither(
-          failure,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async3.complete();
-          }
+        failure,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async3.complete();
+        }
       );
     });
 
@@ -946,26 +952,26 @@ public class VertxCompletableFutureTest {
       String thread = Thread.currentThread().getName();
 
       success.withContext().acceptEitherAsync(
-          success2,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async1.complete();
-          }
+        success2,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async1.complete();
+        }
       );
 
       success2.withContext().acceptEitherAsync(
-          success,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async11.complete();
-          }
+        success,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async11.complete();
+        }
       );
 
       failure.acceptEitherAsync(
-          success,
-          i -> tc.fail("Should not be called")
+        success,
+        i -> tc.fail("Should not be called")
       ).whenComplete((res, err) -> {
         tc.assertNotNull(err);
         tc.assertNull(res);
@@ -974,18 +980,19 @@ public class VertxCompletableFutureTest {
       });
 
       success.withContext().acceptEitherAsync(
-          failure,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async3.complete();
-          }
+        failure,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async3.complete();
+        }
       );
     });
 
   }
 
   @Test
+  @Repeat(50)
   public void testAcceptEitherAsyncWithExecutor(TestContext tc) {
     // Success and success
     Async async1 = tc.async();
@@ -1009,43 +1016,43 @@ public class VertxCompletableFutureTest {
       String thread = Thread.currentThread().getName();
 
       success.acceptEitherAsync(
-          success2,
-          i -> {
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async1.complete();
-          }, executor
+        success2,
+        i -> {
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async1.complete();
+        }, executor
       );
 
       success2.acceptEitherAsync(
-          success,
-          i -> {
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async11.complete();
-          },
-          executor
+        success,
+        i -> {
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async11.complete();
+        },
+        executor
       );
 
       failure.acceptEitherAsync(
-          success,
-          i -> tc.fail("Should not be called"),
-          executor
+        success,
+        i -> tc.fail("Should not be called"),
+        executor
       ).whenComplete((res, err) -> {
         tc.assertNotNull(err);
         tc.assertNull(res);
-        tc.assertEquals(thread, Thread.currentThread().getName());
+        // We can't enforce the thread used here - it's non-deterministic.
         async2.complete();
       });
 
       success.acceptEitherAsync(
-          failure,
-          i -> {
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            async3.complete();
-          },
-          executor
+        failure,
+        i -> {
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          async3.complete();
+        },
+        executor
       );
     });
 
@@ -1075,12 +1082,12 @@ public class VertxCompletableFutureTest {
       String thread = Thread.currentThread().getName();
 
       success.applyToEither(
-          success2,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i + 1;
-          }
+        success2,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i + 1;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1089,12 +1096,12 @@ public class VertxCompletableFutureTest {
       });
 
       success2.applyToEither(
-          success,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i + 5;
-          }
+        success,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i + 5;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1103,12 +1110,12 @@ public class VertxCompletableFutureTest {
       });
 
       success.applyToEither(
-          failure,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i * 2;
-          }
+        failure,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i * 2;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1118,11 +1125,11 @@ public class VertxCompletableFutureTest {
 
       // Fails, because the first one fails.
       failure.applyToEither(
-          success,
-          i -> {
-            tc.fail("Should not be called");
-            return null;
-          }
+        success,
+        i -> {
+          tc.fail("Should not be called");
+          return null;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(err);
         tc.assertNull(res);
@@ -1155,12 +1162,12 @@ public class VertxCompletableFutureTest {
       String thread = Thread.currentThread().getName();
 
       success.applyToEitherAsync(
-          success2,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i + 1;
-          }
+        success2,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i + 1;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1169,12 +1176,12 @@ public class VertxCompletableFutureTest {
       });
 
       success2.applyToEitherAsync(
-          success,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i + 5;
-          }
+        success,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i + 5;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1183,11 +1190,11 @@ public class VertxCompletableFutureTest {
       });
 
       failure.applyToEitherAsync(
-          success,
-          i -> {
-            tc.fail("Should not be called");
-            return null;
-          }
+        success,
+        i -> {
+          tc.fail("Should not be called");
+          return null;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(err);
         tc.assertNull(res);
@@ -1196,12 +1203,12 @@ public class VertxCompletableFutureTest {
       });
 
       success.applyToEitherAsync(
-          failure,
-          i -> {
-            tc.assertEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i * 2;
-          }
+        failure,
+        i -> {
+          tc.assertEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i * 2;
+        }
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1213,6 +1220,7 @@ public class VertxCompletableFutureTest {
   }
 
   @Test
+  @Repeat(50)
   public void testApplyEitherAsyncWithExecutor(TestContext tc) {
     // Success and success
     Async async1 = tc.async();
@@ -1223,25 +1231,28 @@ public class VertxCompletableFutureTest {
     Async async3 = tc.async();
 
     VertxCompletableFuture<Integer> success = new VertxCompletableFuture<>(vertx);
-    success.complete(1);
+    vertx.setTimer(500, l -> success.complete(1));
 
     VertxCompletableFuture<Integer> success2 = new VertxCompletableFuture<>(vertx);
-    vertx.setTimer(100, l -> success2.complete(42));
+    vertx.setTimer(1500, l -> success2.complete(42));
 
     VertxCompletableFuture<Integer> failure = new VertxCompletableFuture<>(vertx);
     failure.completeExceptionally(new RuntimeException("My bad"));
+
+    VertxCompletableFuture<Integer> failure2 = new VertxCompletableFuture<>(vertx);
+    vertx.setTimer(1500, l -> failure.completeExceptionally(new RuntimeException("My bad")));
 
     vertx.runOnContext(v -> {
       String thread = Thread.currentThread().getName();
 
       success.applyToEitherAsync(
-          success2,
-          i -> {
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i + 1;
-          },
-          executor
+        success2,
+        i -> {
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i + 1;
+        },
+        executor
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1250,13 +1261,13 @@ public class VertxCompletableFutureTest {
       });
 
       success2.applyToEitherAsync(
-          success,
-          i -> {
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i + 5;
-          },
-          executor
+        success,
+        i -> {
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i + 5;
+        },
+        executor
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
@@ -1264,31 +1275,34 @@ public class VertxCompletableFutureTest {
         async11.complete();
       });
 
-      failure.applyToEitherAsync(
-          success,
-          i -> {
-            tc.fail("should not be called");
-            return null;
-          },
-          executor
-      ).whenComplete((res, err) -> {
-        tc.assertNotNull(err);
-        tc.assertNull(res);
-        tc.assertEquals(thread, Thread.currentThread().getName());
-        async2.complete();
-      });
+      failure
+        .applyToEitherAsync(
+        success2,
+        i -> {
+          tc.fail("should not be called");
+          return "not the right result";
+        },
+        executor
+      )
+        .whenComplete((res, err) -> {
+          tc.assertNotNull(err);
+          tc.assertNull(res);
+          // We can't enforce the thread used here.
+          async2.complete();
+        });
 
       success.applyToEitherAsync(
-          failure,
-          i -> {
-            tc.assertNotEquals(thread, Thread.currentThread().getName());
-            tc.assertEquals(i, 1);
-            return i * 2;
-          },
-          executor
+        failure2,
+        i -> {
+          tc.assertNotEquals(thread, Thread.currentThread().getName());
+          tc.assertEquals(i, 1);
+          return i * 2;
+        },
+        executor
       ).whenComplete((res, err) -> {
         tc.assertNotNull(res);
         tc.assertNull(err);
+        tc.assertNotEquals(thread, Thread.currentThread().getName());
         tc.assertEquals(res, 2);
         async3.complete();
       });
@@ -1299,7 +1313,7 @@ public class VertxCompletableFutureTest {
 
   @Test
   public void testGetGetNowAndJoin(TestContext tc) throws ExecutionException, InterruptedException,
-      TimeoutException {
+    TimeoutException {
     CompletableFuture<Integer> success = new VertxCompletableFuture<>(vertx);
     CompletableFuture<Integer> failure = new VertxCompletableFuture<>(vertx);
 
@@ -1446,27 +1460,27 @@ public class VertxCompletableFutureTest {
 
     CompletableFuture<Integer> first = new VertxCompletableFuture<>(vertx);
     first
-        .thenApply(x -> x + 1)
-        .thenApplyAsync(i -> Integer.toString(i))
-        .thenCompose(this::display)
-        .whenComplete((res, err) -> {
-          tc.assertNull(err);
-          tc.assertEquals(res, "Result: " + 43);
-          async1.complete();
-        });
+      .thenApply(x -> x + 1)
+      .thenApplyAsync(i -> Integer.toString(i))
+      .thenCompose(this::display)
+      .whenComplete((res, err) -> {
+        tc.assertNull(err);
+        tc.assertEquals(res, "Result: " + 43);
+        async1.complete();
+      });
 
     first.complete(42);
 
     VertxCompletableFuture<Integer> second = new VertxCompletableFuture<>(vertx);
     second
-        .thenApply(x -> x + 1)
-        .thenApplyAsync(i -> Integer.toString(i))
-        .thenCompose(this::display)
-        .whenComplete((res, err) -> {
-          tc.assertNull(res);
-          tc.assertNotNull(err);
-          async2.complete();
-        });
+      .thenApply(x -> x + 1)
+      .thenApplyAsync(i -> Integer.toString(i))
+      .thenCompose(this::display)
+      .whenComplete((res, err) -> {
+        tc.assertNull(res);
+        tc.assertNotNull(err);
+        async2.complete();
+      });
 
     second.completeExceptionally(new Exception("My bad"));
 
@@ -1479,29 +1493,29 @@ public class VertxCompletableFutureTest {
 
     VertxCompletableFuture<Integer> first = new VertxCompletableFuture<>(vertx);
     first
-        .thenApply(x -> x + 1)
-        .thenApplyAsync(i -> Integer.toString(i))
-        .thenCompose(this::display)
-        .whenCompleteAsync((res, err) -> {
-          tc.assertTrue(Context.isOnEventLoopThread());
-          tc.assertNull(err);
-          tc.assertEquals(res, "Result: " + 43);
-          async1.complete();
-        });
+      .thenApply(x -> x + 1)
+      .thenApplyAsync(i -> Integer.toString(i))
+      .thenCompose(this::display)
+      .whenCompleteAsync((res, err) -> {
+        tc.assertTrue(Context.isOnEventLoopThread());
+        tc.assertNull(err);
+        tc.assertEquals(res, "Result: " + 43);
+        async1.complete();
+      });
 
     first.complete(42);
 
     VertxCompletableFuture<Integer> second = new VertxCompletableFuture<>(vertx);
     second
-        .thenApply(x -> x + 1)
-        .thenApplyAsync(i -> Integer.toString(i))
-        .thenCompose(this::display)
-        .whenCompleteAsync((res, err) -> {
-          tc.assertTrue(Context.isOnEventLoopThread());
-          tc.assertNull(res);
-          tc.assertNotNull(err);
-          async2.complete();
-        });
+      .thenApply(x -> x + 1)
+      .thenApplyAsync(i -> Integer.toString(i))
+      .thenCompose(this::display)
+      .whenCompleteAsync((res, err) -> {
+        tc.assertTrue(Context.isOnEventLoopThread());
+        tc.assertNull(res);
+        tc.assertNotNull(err);
+        async2.complete();
+      });
 
     second.completeExceptionally(new Exception("My bad"));
   }
@@ -1513,29 +1527,29 @@ public class VertxCompletableFutureTest {
 
     VertxCompletableFuture<Integer> first = new VertxCompletableFuture<>(vertx);
     first
-        .thenApply(x -> x + 1)
-        .thenApplyAsync(i -> Integer.toString(i))
-        .thenCompose(this::display)
-        .whenCompleteAsync((res, err) -> {
-          tc.assertFalse(Context.isOnEventLoopThread());
-          tc.assertNull(err);
-          tc.assertEquals(res, "Result: " + 43);
-          async1.complete();
-        }, executor);
+      .thenApply(x -> x + 1)
+      .thenApplyAsync(i -> Integer.toString(i))
+      .thenCompose(this::display)
+      .whenCompleteAsync((res, err) -> {
+        tc.assertFalse(Context.isOnEventLoopThread());
+        tc.assertNull(err);
+        tc.assertEquals(res, "Result: " + 43);
+        async1.complete();
+      }, executor);
 
     first.complete(42);
 
     VertxCompletableFuture<Integer> second = new VertxCompletableFuture<>(vertx);
     second
-        .thenApply(x -> x + 1)
-        .thenApplyAsync(i -> Integer.toString(i))
-        .thenCompose(this::display)
-        .whenCompleteAsync((res, err) -> {
-          tc.assertFalse(Context.isOnEventLoopThread());
-          tc.assertNull(res);
-          tc.assertNotNull(err);
-          async2.complete();
-        }, executor);
+      .thenApply(x -> x + 1)
+      .thenApplyAsync(i -> Integer.toString(i))
+      .thenCompose(this::display)
+      .whenCompleteAsync((res, err) -> {
+        tc.assertFalse(Context.isOnEventLoopThread());
+        tc.assertNull(res);
+        tc.assertNotNull(err);
+        async2.complete();
+      }, executor);
 
     second.completeExceptionally(new Exception("My bad"));
   }
@@ -1549,25 +1563,25 @@ public class VertxCompletableFutureTest {
     CompletableFuture<Integer> failure2 = new VertxCompletableFuture<>(vertx);
 
     failure1.thenAccept(i -> tc.fail("Should not be called"))
-        .whenComplete((res, err) -> {
-          tc.assertEquals(err.getClass(), CompletionException.class);
-          tc.assertTrue(err.getMessage().contains("A"));
-          async0.complete();
-        });
+      .whenComplete((res, err) -> {
+        tc.assertEquals(err.getClass(), CompletionException.class);
+        tc.assertTrue(err.getMessage().contains("A"));
+        async0.complete();
+      });
 
     failure1.thenAcceptBoth(failure2, (a, b) -> tc.fail("Should not be called"))
-        .whenComplete((res, err) -> {
-          tc.assertEquals(err.getClass(), CompletionException.class);
-          tc.assertTrue(err.getMessage().contains("A"));
-          async2.complete();
-        });
+      .whenComplete((res, err) -> {
+        tc.assertEquals(err.getClass(), CompletionException.class);
+        tc.assertTrue(err.getMessage().contains("A"));
+        async2.complete();
+      });
 
     failure1.acceptEither(failure2, i -> tc.fail("Should not be called"))
-        .whenComplete((res, err) -> {
-          tc.assertEquals(err.getClass(), CompletionException.class);
-          tc.assertTrue(err.getMessage().contains("B"));
-          async1.complete();
-        });
+      .whenComplete((res, err) -> {
+        tc.assertEquals(err.getClass(), CompletionException.class);
+        tc.assertTrue(err.getMessage().contains("B"));
+        async1.complete();
+      });
 
     failure2.completeExceptionally(new RuntimeException("B"));
     failure1.completeExceptionally(new RuntimeException("A"));
@@ -1653,26 +1667,26 @@ public class VertxCompletableFutureTest {
     Async async2 = tc.async();
     CompletableFuture<Integer> future = new VertxCompletableFuture<>(vertx);
     future.thenApply(this::square)
-        .exceptionally(t -> 22)
-        .whenComplete((res, err) -> {
-          tc.assertEquals(res, 16);
-          async1.complete();
-        })
-        .thenAccept(System.out::print)
-        .thenRun(System.out::println);
+      .exceptionally(t -> 22)
+      .whenComplete((res, err) -> {
+        tc.assertEquals(res, 16);
+        async1.complete();
+      })
+      .thenAccept(System.out::print)
+      .thenRun(System.out::println);
     future.complete(4);
 
     future = new VertxCompletableFuture<>(vertx);
     future.thenApply(this::square).thenApply(i -> {
       throw new RuntimeException("My Bad");
     })
-        .exceptionally(t -> 22)
-        .whenComplete((res, err) -> {
-          tc.assertEquals(res, 22);
-          async2.complete();
-        })
-        .thenAccept(System.out::print)
-        .thenRun(System.out::println);
+      .exceptionally(t -> 22)
+      .whenComplete((res, err) -> {
+        tc.assertEquals(res, 22);
+        async2.complete();
+      })
+      .thenAccept(System.out::print)
+      .thenRun(System.out::println);
     future.complete(4);
   }
 
@@ -1685,25 +1699,25 @@ public class VertxCompletableFutureTest {
     CompletableFuture<Integer> failure2 = new VertxCompletableFuture<>(vertx);
 
     failure1.thenRun(() -> tc.fail("Should not be called"))
-        .whenComplete((res, err) -> {
-          tc.assertEquals(err.getClass(), CompletionException.class);
-          tc.assertTrue(err.getMessage().contains("A"));
-          async0.complete();
-        });
+      .whenComplete((res, err) -> {
+        tc.assertEquals(err.getClass(), CompletionException.class);
+        tc.assertTrue(err.getMessage().contains("A"));
+        async0.complete();
+      });
 
     failure1.runAfterBoth(failure2, () -> tc.fail("Should not be called"))
-        .whenComplete((res, err) -> {
-          tc.assertEquals(err.getClass(), CompletionException.class);
-          tc.assertTrue(err.getMessage().contains("A"));
-          async2.complete();
-        });
+      .whenComplete((res, err) -> {
+        tc.assertEquals(err.getClass(), CompletionException.class);
+        tc.assertTrue(err.getMessage().contains("A"));
+        async2.complete();
+      });
 
     failure1.runAfterEither(failure2, () -> tc.fail("Should not be called"))
-        .whenComplete((res, err) -> {
-          tc.assertEquals(err.getClass(), CompletionException.class);
-          tc.assertTrue(err.getMessage().contains("B"));
-          async1.complete();
-        });
+      .whenComplete((res, err) -> {
+        tc.assertEquals(err.getClass(), CompletionException.class);
+        tc.assertTrue(err.getMessage().contains("B"));
+        async1.complete();
+      });
 
     failure2.completeExceptionally(new RuntimeException("B"));
     failure1.completeExceptionally(new RuntimeException("A"));
@@ -1714,9 +1728,9 @@ public class VertxCompletableFutureTest {
   public void testFromCompletableStageJavadoc() {
     VertxCompletableFuture<Integer> future = new VertxCompletableFuture<>(vertx);
     future
-        .thenApply(this::square)
-        .thenAccept(System.out::print)
-        .thenRun(System.out::println);
+      .thenApply(this::square)
+      .thenAccept(System.out::print)
+      .thenRun(System.out::println);
 
     future.complete(42);
 
@@ -1734,11 +1748,11 @@ public class VertxCompletableFutureTest {
     });
 
     vertx.<Void>executeBlocking(
-        fut -> {
-          assertThat(future.withContext().context(), is(Vertx.currentContext()));
-          async2.complete();
-        },
-        null
+      fut -> {
+        assertThat(future.withContext().context(), is(Vertx.currentContext()));
+        async2.complete();
+      },
+      null
     );
   }
 
@@ -1767,7 +1781,7 @@ public class VertxCompletableFutureTest {
     });
 
     VertxCompletableFuture<Integer> failingFuture = new VertxCompletableFuture<>(vertx);
-    Future<Integer> failure = failingFuture.thenApply(i -> i + 1).thenApplyAsync(i -> i + i +1).toFuture();
+    Future<Integer> failure = failingFuture.thenApply(i -> i + 1).thenApplyAsync(i -> i + i + 1).toFuture();
     failure.setHandler(ar -> {
       assertThat(ar.failed(), is(true));
       assertThat(ar.succeeded(), is(false));
