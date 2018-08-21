@@ -11,7 +11,7 @@ env:
   - SONATYPE_USERNAME="clement.escoffier"
   - secure: h887vbdiBD8HPV0Ltssu2JIUWVHKHkshxiXu/7uh9ZFQyyzqVWLTjcSeXWqWwKgTVgUtDBtF0OICw7RqKAKzSA2EX+v0A9EzkkR2cqa5EKlii1GJRec7qbteRUIln0ejNHYKo66wzU3p/1AGMGK7b8nAu3jdAViTFgQ2b/1RHSA6lCWsOFMPkQVxGwsexXifWIIps4wCKmFmCN5yzFLOPDfv9bV76jcC5MyUy4KuLW8igm2ygJ8b+O71t3WJNPf12s/mRWcQ5AaRU772l8affbDvDjeud+IHpG7vmWCnCrVd2pLogfLnL/4Uj6uXhLScuHzynqAWRTW2GOrwbBEV5Qz01fcVTE2J1KfEkeQtGhpCWcB/6YQOgilttK0k+nwENxehg2fJgR5ZvxcfO+qkOMWsDNCGHRYKvQlJFHiY3DHsE4DuAKxE8WK5fVMNWA4eslAPJW/NOY5PQ0p8jWo2JSyR/ZvKPtR2z4CpwQcMgrtFIZWe4DhZbf73MedQ7n8qtx+WuBW1iL5fSUMye63VYuTILUTmNotrBSARqonlbZ5iglviZUwB/rm8dNklCNufuuEOeBkCLLuygF2/6mIlYN5X+UL1RZWsy4nx0oMNE6/TAGSoKPjt0DMYSABssPCJ7MRniIDzwhoJ6/CSlAnii29OGzcLEGQ2CXsLeE4NiRs=
 script:
-- mvn clean install sonar:sonar -Pcoverage
+- mvn clean install sonar:sonar -Pcoverage -Dsonar.host.url=https://sonarcloud.io/
 after_success:
 - ".build/deploy-snapshot.sh"
 notifications:
