@@ -1,6 +1,7 @@
 package me.escoffier.vertx.completablefuture;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Assert;
@@ -71,6 +72,27 @@ public class SupplyAndRunAsyncTest {
         reference.set(Thread.currentThread().getName()));
     future.get();
     Assert.assertTrue(reference.get().contains("worker"));
+  }
+
+  @Test
+  public void testSupplyBlockingAsyncOn() throws ExecutionException, InterruptedException {
+    String threadPoolName = "testing-thread-pool";
+    WorkerExecutor worker = vertx.createSharedWorkerExecutor(threadPoolName);
+    CompletableFuture<String> future = VertxCompletableFuture.supplyBlockingAsyncOn(vertx, worker, () ->
+        Thread.currentThread().getName());
+    String s = future.get();
+    Assert.assertTrue(s.contains(threadPoolName));
+  }
+
+  @Test
+  public void testRunBlockingAsyncOn() throws ExecutionException, InterruptedException {
+    String threadPoolName = "testing-thread-pool";
+    WorkerExecutor worker = vertx.createSharedWorkerExecutor(threadPoolName);
+    AtomicReference<String> reference = new AtomicReference<>();
+    CompletableFuture<Void> future = VertxCompletableFuture.runBlockingAsyncOn(vertx, worker, () ->
+        reference.set(Thread.currentThread().getName()));
+    future.get();
+    Assert.assertTrue(reference.get().contains(threadPoolName));
   }
 
 }

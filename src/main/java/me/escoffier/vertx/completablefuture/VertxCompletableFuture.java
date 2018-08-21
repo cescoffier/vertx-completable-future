@@ -4,6 +4,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
+import io.vertx.core.WorkerExecutor;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -262,6 +263,23 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
   }
 
   /**
+   * Returns a new CompletableFuture that is asynchronously completed by a task running in the worker thread pool of
+   * Vert.x
+   * <p>
+   * This method is different from {@link CompletableFuture#supplyAsync(Supplier)} as it does not use a fork join
+   * executor, but the worker thread pool.
+   *
+   * @param vertx    the Vert.x instance
+   * @param worker   the WorkerExecution on which the supplier is to be executed
+   * @param supplier a function returning the value to be used to complete the returned CompletableFuture
+   * @param <T>      the function's return type
+   * @return the new CompletableFuture
+   */
+  public static <T> VertxCompletableFuture<T> supplyBlockingAsyncOn(Vertx vertx, WorkerExecutor worker, Supplier<T> supplier) {
+    return supplyBlockingAsyncOn(Objects.requireNonNull(vertx).getOrCreateContext(), worker, supplier);
+  }
+
+  /**
    * Returns a new CompletableFuture that is asynchronously completed by a action running in the worker thread pool of
    * Vert.x
    * <p>
@@ -292,16 +310,77 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
   public static VertxCompletableFuture<Void> runBlockingAsync(Context context, Runnable runnable) {
     Objects.requireNonNull(runnable);
     VertxCompletableFuture<Void> future = new VertxCompletableFuture<>(Objects.requireNonNull(context));
-    context.executeBlocking(
+    context.<Void>executeBlocking(
         fut -> {
           try {
             runnable.run();
-            future.complete(null);
+            fut.complete(null);
           } catch (Throwable e) {
-            future.completeExceptionally(e);
+            fut.fail(e);
           }
         },
-        null
+        false,
+        ar -> {
+          if (ar.failed()) {
+            future.completeExceptionally(ar.cause());
+          } else {
+            future.complete(ar.result());
+          }
+        }
+    );
+    return future;
+  }
+
+  /**
+   * Returns a new CompletableFuture that is asynchronously completed by a action running in the provided
+   * Vert.x worker thread pool.
+   * <p>
+   * This method is different from {@link CompletableFuture#runAsync(Runnable)} as it does not use a fork join
+   * executor, but the worker thread pool.
+   *
+   * @param vertx    the Vert.x instance
+   * @param worker   the WorkerExecution on which the runnable is to be executed
+   * @param runnable the action, when its execution completes, it completes the returned CompletableFuture. If the
+   *                 execution throws an exception, the returned CompletableFuture is completed exceptionally.
+   * @return the new CompletableFuture
+   */
+  public static VertxCompletableFuture<Void> runBlockingAsyncOn(Vertx vertx, WorkerExecutor worker, Runnable runnable) {
+    return runBlockingAsyncOn(Objects.requireNonNull(vertx).getOrCreateContext(), worker, runnable);
+  }
+
+  /**
+   * Returns a new CompletableFuture that is asynchronously completed by a action running in the provided
+   * Vert.x worker thread pool.
+   * <p>
+   * This method is different from {@link CompletableFuture#runAsync(Runnable)} as it does not use a fork join
+   * executor, but the provided worker thread pool.
+   *
+   * @param context  the Vert.x context
+   * @param worker   the WorkerExecution on which the runnable is to be executed
+   * @param runnable the action, when its execution completes, it completes the returned CompletableFuture. If the
+   *                 execution throws an exception, the returned CompletableFuture is completed exceptionally.
+   * @return the new CompletableFuture
+   */
+  public static VertxCompletableFuture<Void> runBlockingAsyncOn(Context context, WorkerExecutor worker, Runnable runnable) {
+    Objects.requireNonNull(runnable);
+    VertxCompletableFuture<Void> future = new VertxCompletableFuture<>(Objects.requireNonNull(context));
+    Objects.requireNonNull(worker).<Void>executeBlocking(
+        fut -> {
+          try {
+            runnable.run();
+            fut.complete(null);
+          } catch (Throwable e) {
+            fut.fail(e);
+          }
+        },
+        false,
+        ar -> {
+          if (ar.failed()) {
+            future.completeExceptionally(ar.cause());
+          } else {
+            future.complete(ar.result());
+          }
+        }
     );
     return future;
   }
@@ -329,6 +408,7 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
             fut.fail(e);
           }
         },
+        false,
         ar -> {
           if (ar.failed()) {
             future.completeExceptionally(ar.cause());
@@ -336,6 +416,42 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
             future.complete(ar.result());
           }
         }
+    );
+    return future;
+  }
+
+  /**
+   * Returns a new CompletableFuture that is asynchronously completed by a task running in the provided
+   * Vert.x worker thread pool.
+   * <p>
+   * This method is different from {@link CompletableFuture#supplyAsync(Supplier)} as it does not use a fork join
+   * executor, but the worker thread pool.
+   *
+   * @param context  the context in which the supplier is executed.
+   * @param worker   the WorkerExecution on which the supplier is to be executed
+   * @param supplier a function returning the value to be used to complete the returned CompletableFuture
+   * @param <T>      the function's return type
+   * @return the new CompletableFuture
+   */
+  public static <T> VertxCompletableFuture<T> supplyBlockingAsyncOn(Context context, WorkerExecutor worker, Supplier<T> supplier) {
+    Objects.requireNonNull(supplier);
+    VertxCompletableFuture<T> future = new VertxCompletableFuture<>(context);
+    Objects.requireNonNull(worker).<T>executeBlocking(
+            fut -> {
+              try {
+                fut.complete(supplier.get());
+              } catch (Throwable e) {
+                fut.fail(e);
+              }
+            },
+            false,
+            ar -> {
+              if (ar.failed()) {
+                future.completeExceptionally(ar.cause());
+              } else {
+                future.complete(ar.result());
+              }
+            }
     );
     return future;
   }
