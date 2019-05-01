@@ -100,6 +100,22 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
   }
 
   /**
+   * Creates a new {@link VertxCompletableFuture} from the given {@link Vertx} instance and given
+   * {@link CompletionStage}. The returned future uses the current Vert.x context, or creates a new one.
+   * <p>
+   * The created {@link VertxCompletableFuture} is completed successfully or not when the given completable future
+   * completes successfully or not.
+   *
+   * @param vertx  the Vert.x instance
+   * @param stage  the completion stage
+   * @param <T>    the type of the result
+   * @return the new {@link VertxCompletableFuture}
+   */
+  public static <T> VertxCompletableFuture<T> from(Vertx vertx, CompletionStage<T> stage) {
+    return from(vertx.getOrCreateContext(), stage.toCompletableFuture());
+  }
+
+  /**
    * Creates a new {@link VertxCompletableFuture} from the given {@link Context} instance and given
    * {@link Future}. The returned future uses the current Vert.x context, or creates a new one.
    * <p>
