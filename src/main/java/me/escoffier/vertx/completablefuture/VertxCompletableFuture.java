@@ -84,6 +84,51 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
   // ============= Factory methods (from) =============
 
   /**
+   * Creates a new {@link VertxCompletableFuture} with the current {@link Context} and given
+   * {@link CompletableFuture}.
+   * <p>
+   * The created {@link VertxCompletableFuture} is completed successfully or not when the given completable future
+   * completes successfully or not.
+   *
+   * @param future the future
+   * @param <T>    the type of the result
+   * @return the new {@link VertxCompletableFuture}
+   */
+  public static <T> VertxCompletableFuture<T> from(CompletableFuture<T> future) {
+    return from(Vertx.currentContext(), future);
+  }
+
+  /**
+   * Creates a new {@link VertxCompletableFuture} with the current {@link Context} and given
+   * {@link CompletionStage}.
+   * <p>
+   * The created {@link VertxCompletableFuture} is completed successfully or not when the given completable future
+   * completes successfully or not.
+   *
+   * @param stage  the completion stage
+   * @param <T>    the type of the result
+   * @return the new {@link VertxCompletableFuture}
+   */
+  public static <T> VertxCompletableFuture<T> from(CompletionStage<T> stage) {
+    return from(Vertx.currentContext(), stage);
+  }
+
+  /**
+   * Creates a new {@link VertxCompletableFuture} with the current {@link Context} and given
+   * {@link Future}.
+   * <p>
+   * The created {@link VertxCompletableFuture} is completed successfully or not when the given completable future
+   * completes successfully or not.
+   *
+   * @param future the future
+   * @param <T>    the type of the result
+   * @return the new {@link VertxCompletableFuture}
+   */
+  public static <T> VertxCompletableFuture<T> from(Future<T> future) {
+    return from(Vertx.currentContext(), future);
+  }
+
+  /**
    * Creates a new {@link VertxCompletableFuture} from the given {@link Vertx} instance and given
    * {@link CompletableFuture}. The returned future uses the current Vert.x context, or creates a new one.
    * <p>
@@ -112,7 +157,7 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
    * @return the new {@link VertxCompletableFuture}
    */
   public static <T> VertxCompletableFuture<T> from(Vertx vertx, CompletionStage<T> stage) {
-    return from(vertx.getOrCreateContext(), stage.toCompletableFuture());
+    return from(vertx.getOrCreateContext(), stage);
   }
 
   /**
@@ -129,6 +174,22 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
    */
   public static <T> VertxCompletableFuture<T> from(Vertx vertx, Future<T> future) {
     return from(vertx.getOrCreateContext(), future);
+  }
+
+  /**
+   * Creates a {@link VertxCompletableFuture} from the given {@link Context} and {@link CompletionStage}.
+   * <p>
+   * The created {@link VertxCompletableFuture} is completed successfully or not when the given future
+   * completes successfully or not. The completion is called on the given {@link Context}, immediately if it is
+   * already executing on the right context, asynchronously if not.
+   *
+   * @param context the context
+   * @param stage   the completion stage
+   * @param <T>     the type of result
+   * @return the creation {@link VertxCompletableFuture}
+   */
+  public static <T> VertxCompletableFuture<T> from(Context context, CompletionStage<T> stage) {
+    return from(context, stage.toCompletableFuture());
   }
 
   /**
