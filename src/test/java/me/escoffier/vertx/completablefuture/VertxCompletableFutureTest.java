@@ -1760,6 +1760,8 @@ public class VertxCompletableFutureTest {
     Async async1 = tc.async();
     Async async2 = tc.async();
     Async async3 = tc.async();
+    Async async4 = tc.async();
+    Async async5 = tc.async();
 
     VertxCompletableFuture<Integer> future = new VertxCompletableFuture<>(vertx);
     Future<Integer> success = future.thenApply(i -> i + 1).thenApplyAsync(i -> i + 1).toFuture();
@@ -1790,8 +1792,32 @@ public class VertxCompletableFutureTest {
       async3.complete();
     });
 
+    // test that `VertxCompletableFuture` receives callbacks from the Vert.x Future
+    VertxCompletableFuture<Integer> awaitedFuture = new VertxCompletableFuture<>(vertx);
+
+    awaitedFuture.handle((val, except) -> {
+      assertThat(val, is(42));
+      assertThat(except, is(nullValue()));
+      async4.complete();
+
+      return (Void) null;
+    });
+
+    VertxCompletableFuture<Integer> awaitedFailingFuture = new VertxCompletableFuture<>(vertx);
+
+    awaitedFailingFuture.handle((val, except) -> {
+      assertThat(val, is(nullValue()));
+      assertThat(except, is(notNullValue()));
+      assertThat(except.getMessage(), containsString("My bad again"));
+      async5.complete();
+
+      return (Void) null;
+    });
+
     future.complete(42);
     failingFuture.completeExceptionally(new Exception("My bad"));
+    awaitedFuture.toFuture().complete(42);
+    awaitedFailingFuture.completeExceptionally(new Exception("My bad again"));
   }
 
   @Test

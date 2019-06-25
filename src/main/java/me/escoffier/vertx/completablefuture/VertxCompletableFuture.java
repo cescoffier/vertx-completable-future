@@ -552,6 +552,14 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
         fut.complete(res);
       }
     });
+    // this can't recurse because the Future API guarantees repeated completions should do nothing
+    fut.setHandler(res -> {
+      if (res.succeeded()) {
+        future.complete(res.result());
+      } else {
+        future.completeExceptionally(res.cause());
+      }
+    });
     return fut;
   }
 
