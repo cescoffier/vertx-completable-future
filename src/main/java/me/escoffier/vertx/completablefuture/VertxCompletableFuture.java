@@ -890,6 +890,10 @@ public class VertxCompletableFuture<T> extends CompletableFuture<T> implements C
     return new VertxCompletableFuture<>(context, super.handleAsync(fn, executor));
   }
 
+  @Override
+  public VertxCompletableFuture<T> exceptionally(Function<Throwable, ? extends T> fn) {
+	return new VertxCompletableFuture<>(context, super.exceptionally(fn));
+  }
 
   @Override
   public VertxCompletableFuture<T> toCompletableFuture() {
