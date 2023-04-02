@@ -877,7 +877,7 @@ public class VertxCompletableFutureTest {
     success.complete(1);
 
     VertxCompletableFuture<Integer> success2 = new VertxCompletableFuture<>(vertx);
-    vertx.setTimer(100, l -> success2.complete(42));
+    vertx.setTimer(500, l -> success2.complete(42));
 
 
     VertxCompletableFuture<Integer> failure = new VertxCompletableFuture<>(vertx);
